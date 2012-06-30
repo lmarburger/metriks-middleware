@@ -4,8 +4,9 @@ module Metriks
   class Middleware
     VERSION = '0.0.1'
 
-    def initialize(app)
+    def initialize(app, options)
       @app = app
+      @metric_prefix = options.fetch :metric_prefix, 'app'
     end
 
     def call(env)
@@ -32,9 +33,9 @@ module Metriks
       queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
       dynos_in_use = env['HTTP_X_HEROKU_DYNOS_IN_USE']
 
-      Metriks.histogram('app.queue.wait') .update(queue_wait.to_i)   if queue_wait
-      Metriks.histogram('app.queue.depth').update(queue_depth.to_i)  if queue_depth
-      Metriks.histogram('app.dynos')      .update(dynos_in_use.to_i) if dynos_in_use
+      Metriks.histogram("#{ @metric_prefix }.queue.wait") .update(queue_wait.to_i)   if queue_wait
+      Metriks.histogram("#{ @metric_prefix }.queue.depth").update(queue_depth.to_i)  if queue_depth
+      Metriks.histogram("#{ @metric_prefix }.dynos")      .update(dynos_in_use.to_i) if dynos_in_use
     end
 
     def call_downstream(env)
@@ -42,7 +43,7 @@ module Metriks
     end
 
     def response_timer
-      Metriks.timer 'app'
+      Metriks.timer @metric_prefix
     end
   end
 end
