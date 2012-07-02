@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    metriks-middleware (0.0.1)
+    metriks-middleware (1.0.0)
       metriks (~> 0.9.9)
 
 GEM
