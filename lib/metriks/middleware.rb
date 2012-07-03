@@ -12,6 +12,7 @@ module Metriks
     def call(env)
       time_response(env) do
         record_heroku_queue_status env
+        record_error_rate env
         call_downstream env
       end
     end
@@ -36,8 +37,22 @@ module Metriks
       Metriks.histogram("#{ @name }.queue.depth").update(queue_depth.to_i) if queue_depth
     end
 
+    def record_error_rate(env)
+      original_callback = env['async.callback']
+      env['async.callback'] = lambda do |env|
+        record_error env.first
+        original_callback.call env
+      end
+    end
+
     def call_downstream(env)
-      @app.call env
+      response = @app.call env
+      record_error response.first
+      response
+    end
+
+    def record_error(status)
+      Metriks.meter("#{ @name }.errors").mark if status >= 500
     end
 
     def response_timer
