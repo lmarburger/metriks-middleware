@@ -11,7 +11,7 @@ GEM
     avl_tree (1.1.3)
     hitimes (1.1.1)
     metaclass (0.0.1)
-    metriks (0.9.9)
+    metriks (0.9.9.1)
       atomic (~> 1.0)
       avl_tree (~> 1.1.2)
       hitimes (~> 1.1)
