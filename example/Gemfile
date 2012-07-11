@@ -1,0 +1,6 @@
+source :rubygems
+
+gem 'metriks-middleware'
+gem 'thin'
+
+gem 'foreman', group: 'development'
