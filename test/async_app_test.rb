@@ -61,7 +61,7 @@ class AsyncAppTest < Test::Unit::TestCase
     assert_in_delta 0.1, time, 0.01
   end
 
-  def test_records_errors
+  def test_records_error_responses
     error_sync_app  = lambda do |env| [500, {}, ['']] end
     error_async_app = lambda do |env|
       env['async.callback'].call [500, {}, ['']]
@@ -82,6 +82,29 @@ class AsyncAppTest < Test::Unit::TestCase
     errors = Metriks.meter('app.errors').count
 
     assert_equal 2, errors
+  end
+
+  def test_records_not_found_responses
+    not_found_sync_app  = lambda do |env| [404, {}, ['']] end
+    not_found_async_app = lambda do |env|
+      env['async.callback'].call [404, {}, ['']]
+      [-1, {}, ['']]
+    end
+
+    success_sync_app  = lambda do |env| [200, {}, ['']] end
+    success_async_app = lambda do |env|
+      env['async.callback'].call [200, {}, ['']]
+      [-1, {}, ['']]
+    end
+
+    Metriks::Middleware.new(not_found_sync_app).call(@env.dup)
+    Metriks::Middleware.new(not_found_async_app).call(@env.dup)
+    Metriks::Middleware.new(success_sync_app).call(@env.dup)
+    Metriks::Middleware.new(success_async_app).call(@env.dup)
+
+    not_founds = Metriks.meter('app.responses.not_found').count
+
+    assert_equal 2, not_founds
   end
 
   def test_omits_queue_metrics

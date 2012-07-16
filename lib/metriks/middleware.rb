@@ -52,7 +52,11 @@ module Metriks
     end
 
     def record_error(status)
-      Metriks.meter("#{ @name }.errors").mark if status >= 500
+      if status >= 500
+        Metriks.meter("#{ @name }.errors").mark
+      elsif status == 404
+        Metriks.meter("#{ @name }.responses.not_found").mark
+      end
     end
 
     def response_timer

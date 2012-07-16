@@ -45,7 +45,7 @@ class SyncAppTest < Test::Unit::TestCase
     assert_in_delta 0.1, time, 0.01
   end
 
-  def test_records_errors
+  def test_records_error_responses
     error_app = lambda do |env| [500, {}, ['']] end
     2.times { Metriks::Middleware.new(error_app).call(@env) }
     Metriks::Middleware.new(@downstream).call(@env)
@@ -53,6 +53,16 @@ class SyncAppTest < Test::Unit::TestCase
     errors = Metriks.meter('app.errors').count
 
     assert_equal 2, errors
+  end
+
+  def test_records_not_found_responses
+    not_found_app = lambda do |env| [404, {}, ['']] end
+    2.times { Metriks::Middleware.new(not_found_app).call(@env) }
+    Metriks::Middleware.new(@downstream).call(@env)
+
+    not_founds = Metriks.meter('app.responses.not_found').count
+
+    assert_equal 2, not_founds
   end
 
   def test_omits_queue_metrics
@@ -78,18 +88,22 @@ class SyncAppTest < Test::Unit::TestCase
   end
 
   def test_name_merics
-    error_app = lambda do |env| [500, {}, ['']] end
+    error_app     = lambda do |env| [500, {}, ['']] end
+    not_found_app = lambda do |env| [404, {}, ['']] end
     @env.merge! 'HTTP_X_HEROKU_QUEUE_WAIT_TIME' => '42',
                 'HTTP_X_HEROKU_QUEUE_DEPTH'     => '24'
     Metriks::Middleware.new(error_app, name: 'metric-name').call(@env)
+    Metriks::Middleware.new(not_found_app, name: 'metric-name').call(@env)
 
-    count  = Metriks.timer('metric-name').count
-    errors = Metriks.meter('metric-name.errors').count
-    wait   = Metriks.histogram('metric-name.queue.wait').mean
-    depth  = Metriks.histogram('metric-name.queue.depth').mean
+    count      = Metriks.timer('metric-name').count
+    errors     = Metriks.meter('metric-name.errors').count
+    not_founds = Metriks.meter('metric-name.responses.not_found').count
+    wait       = Metriks.histogram('metric-name.queue.wait').mean
+    depth      = Metriks.histogram('metric-name.queue.depth').mean
 
     assert_operator count,  :>, 0
     assert_operator errors, :>, 0
+    assert_operator not_founds, :>, 0
     assert_operator wait,   :>, 0
     assert_operator depth,  :>, 0
   end
