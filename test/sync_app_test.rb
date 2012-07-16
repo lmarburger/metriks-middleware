@@ -50,7 +50,7 @@ class SyncAppTest < Test::Unit::TestCase
     2.times { Metriks::Middleware.new(error_app).call(@env) }
     Metriks::Middleware.new(@downstream).call(@env)
 
-    errors = Metriks.meter('app.errors').count
+    errors = Metriks.meter('app.responses.error').count
 
     assert_equal 2, errors
   end
@@ -96,7 +96,7 @@ class SyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(not_found_app, name: 'metric-name').call(@env)
 
     count      = Metriks.timer('metric-name').count
-    errors     = Metriks.meter('metric-name.errors').count
+    errors     = Metriks.meter('metric-name.responses.error').count
     not_founds = Metriks.meter('metric-name.responses.not_found').count
     wait       = Metriks.histogram('metric-name.queue.wait').mean
     depth      = Metriks.histogram('metric-name.queue.depth').mean

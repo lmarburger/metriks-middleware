@@ -79,7 +79,7 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(success_sync_app).call(@env.dup)
     Metriks::Middleware.new(success_async_app).call(@env.dup)
 
-    errors = Metriks.meter('app.errors').count
+    errors = Metriks.meter('app.responses.error').count
 
     assert_equal 2, errors
   end
