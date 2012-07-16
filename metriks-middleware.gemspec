@@ -13,8 +13,8 @@ Gem::Specification.new do |s|
   ## If your rubyforge_project name is different, then edit it and comment out
   ## the sub! line in the Rakefile
   s.name              = 'metriks-middleware'
-  s.version           = '1.1.0'
-  s.date              = '2012-07-11'
+  s.version           = '1.2.0'
+  s.date              = '2012-07-16'
 
   ## Make sure your summary is short. The description may be as long
   ## as you like.
@@ -51,10 +51,13 @@ Gem::Specification.new do |s|
   # = MANIFEST =
   s.files = %w[
     Gemfile
-    Gemfile.lock
     LICENSE
     README.md
     Rakefile
+    example/Gemfile
+    example/Gemfile.lock
+    example/Procfile
+    example/config.ru
     lib/metriks/middleware.rb
     metriks-middleware.gemspec
     test/async_app_test.rb
