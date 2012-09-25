@@ -4,9 +4,8 @@ module Metriks
   class Middleware
     VERSION = '1.2.0'
 
-    def initialize(app, options = {})
-      @app  = app
-      @name = options.fetch :name, 'app'
+    def initialize(app)
+      @app = app
     end
 
     def call(env)
@@ -33,8 +32,8 @@ module Metriks
       queue_wait   = env['HTTP_X_HEROKU_QUEUE_WAIT_TIME']
       queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
 
-      Metriks.histogram("#{ @name }.queue.wait") .update(queue_wait.to_i)  if queue_wait
-      Metriks.histogram("#{ @name }.queue.depth").update(queue_depth.to_i) if queue_depth
+      Metriks.histogram("queue.wait") .update(queue_wait.to_i)  if queue_wait
+      Metriks.histogram("queue.depth").update(queue_depth.to_i) if queue_depth
     end
 
     def record_error_rate(env)
@@ -53,14 +52,14 @@ module Metriks
 
     def record_error(status)
       if status >= 500
-        Metriks.meter("#{ @name }.responses.error").mark
+        Metriks.meter("responses.error").mark
       elsif status == 404
-        Metriks.meter("#{ @name }.responses.not_found").mark
+        Metriks.meter("responses.not_found").mark
       end
     end
 
     def response_timer
-      Metriks.timer(@name)
+      Metriks.timer('app')
     end
   end
 end

@@ -79,7 +79,7 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(success_sync_app).call(@env.dup)
     Metriks::Middleware.new(success_async_app).call(@env.dup)
 
-    errors = Metriks.meter('app.responses.error').count
+    errors = Metriks.meter('responses.error').count
 
     assert_equal 2, errors
   end
@@ -102,7 +102,7 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(success_sync_app).call(@env.dup)
     Metriks::Middleware.new(success_async_app).call(@env.dup)
 
-    not_founds = Metriks.meter('app.responses.not_found').count
+    not_founds = Metriks.meter('responses.not_found').count
 
     assert_equal 2, not_founds
   end
@@ -111,8 +111,8 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(@downstream).call(@env)
     @async_close.call
 
-    wait  = Metriks.histogram('app.queue.wait').mean
-    depth = Metriks.histogram('app.queue.depth').mean
+    wait  = Metriks.histogram('queue.wait').mean
+    depth = Metriks.histogram('queue.depth').mean
 
     assert_equal 0, wait
     assert_equal 0, depth
@@ -124,25 +124,10 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(@downstream).call(@env)
     @async_close.call
 
-    wait  = Metriks.histogram('app.queue.wait').mean
-    depth = Metriks.histogram('app.queue.depth').mean
+    wait  = Metriks.histogram('queue.wait').mean
+    depth = Metriks.histogram('queue.depth').mean
 
     assert_equal 42, wait
     assert_equal 24, depth
-  end
-
-  def test_name_merics
-    @env.merge! 'HTTP_X_HEROKU_QUEUE_WAIT_TIME' => '42',
-                'HTTP_X_HEROKU_QUEUE_DEPTH'     => '24'
-    Metriks::Middleware.new(@downstream, name: 'metric-name').call(@env)
-    @async_close.call
-
-    count = Metriks.timer('metric-name').count
-    wait  = Metriks.histogram('metric-name.queue.wait').mean
-    depth = Metriks.histogram('metric-name.queue.depth').mean
-
-    assert_operator count, :>, 0
-    assert_operator wait,  :>, 0
-    assert_operator depth, :>, 0
   end
 end

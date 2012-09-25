@@ -50,7 +50,7 @@ class SyncAppTest < Test::Unit::TestCase
     2.times { Metriks::Middleware.new(error_app).call(@env) }
     Metriks::Middleware.new(@downstream).call(@env)
 
-    errors = Metriks.meter('app.responses.error').count
+    errors = Metriks.meter('responses.error').count
 
     assert_equal 2, errors
   end
@@ -60,7 +60,7 @@ class SyncAppTest < Test::Unit::TestCase
     2.times { Metriks::Middleware.new(not_found_app).call(@env) }
     Metriks::Middleware.new(@downstream).call(@env)
 
-    not_founds = Metriks.meter('app.responses.not_found').count
+    not_founds = Metriks.meter('responses.not_found').count
 
     assert_equal 2, not_founds
   end
@@ -68,8 +68,8 @@ class SyncAppTest < Test::Unit::TestCase
   def test_omits_queue_metrics
     Metriks::Middleware.new(@downstream).call(@env)
 
-    wait  = Metriks.histogram('app.queue.wait').mean
-    depth = Metriks.histogram('app.queue.depth').mean
+    wait  = Metriks.histogram('queue.wait').mean
+    depth = Metriks.histogram('queue.depth').mean
 
     assert_equal 0, wait
     assert_equal 0, depth
@@ -80,31 +80,10 @@ class SyncAppTest < Test::Unit::TestCase
                 'HTTP_X_HEROKU_QUEUE_DEPTH'     => '24'
     Metriks::Middleware.new(@downstream).call(@env)
 
-    wait  = Metriks.histogram('app.queue.wait').mean
-    depth = Metriks.histogram('app.queue.depth').mean
+    wait  = Metriks.histogram('queue.wait').mean
+    depth = Metriks.histogram('queue.depth').mean
 
     assert_equal 42, wait
     assert_equal 24, depth
-  end
-
-  def test_name_merics
-    error_app     = lambda do |env| [500, {}, ['']] end
-    not_found_app = lambda do |env| [404, {}, ['']] end
-    @env.merge! 'HTTP_X_HEROKU_QUEUE_WAIT_TIME' => '42',
-                'HTTP_X_HEROKU_QUEUE_DEPTH'     => '24'
-    Metriks::Middleware.new(error_app, name: 'metric-name').call(@env)
-    Metriks::Middleware.new(not_found_app, name: 'metric-name').call(@env)
-
-    count      = Metriks.timer('metric-name').count
-    errors     = Metriks.meter('metric-name.responses.error').count
-    not_founds = Metriks.meter('metric-name.responses.not_found').count
-    wait       = Metriks.histogram('metric-name.queue.wait').mean
-    depth      = Metriks.histogram('metric-name.queue.depth').mean
-
-    assert_operator count,  :>, 0
-    assert_operator errors, :>, 0
-    assert_operator not_founds, :>, 0
-    assert_operator wait,   :>, 0
-    assert_operator depth,  :>, 0
   end
 end
