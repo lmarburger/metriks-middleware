@@ -2,7 +2,7 @@ require 'metriks'
 
 module Metriks
   class Middleware
-    VERSION = '1.2.0'
+    VERSION = '1.2.1'
 
     def initialize(app)
       @app = app
