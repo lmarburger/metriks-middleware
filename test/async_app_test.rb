@@ -107,6 +107,29 @@ class AsyncAppTest < Test::Unit::TestCase
     assert_equal 2, not_founds
   end
 
+  def test_records_not_modified_responses
+    not_modified_sync_app  = lambda do |env| [304, {}, ['']] end
+    not_modified_async_app = lambda do |env|
+      env['async.callback'].call [304, {}, ['']]
+      [-1, {}, ['']]
+    end
+
+    success_sync_app  = lambda do |env| [200, {}, ['']] end
+    success_async_app = lambda do |env|
+      env['async.callback'].call [200, {}, ['']]
+      [-1, {}, ['']]
+    end
+
+    Metriks::Middleware.new(not_modified_sync_app).call(@env.dup)
+    Metriks::Middleware.new(not_modified_async_app).call(@env.dup)
+    Metriks::Middleware.new(success_sync_app).call(@env.dup)
+    Metriks::Middleware.new(success_async_app).call(@env.dup)
+
+    not_modifieds = Metriks.meter('responses.not_modified').count
+
+    assert_equal 2, not_modifieds
+  end
+
   def test_omits_queue_metrics
     Metriks::Middleware.new(@downstream).call(@env)
     @async_close.call

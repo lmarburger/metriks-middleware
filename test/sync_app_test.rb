@@ -65,6 +65,16 @@ class SyncAppTest < Test::Unit::TestCase
     assert_equal 2, not_founds
   end
 
+  def test_records_not_modified_responses
+    not_modified_app = lambda do |env| [304, {}, ['']] end
+    2.times { Metriks::Middleware.new(not_modified_app).call(@env) }
+    Metriks::Middleware.new(@downstream).call(@env)
+
+    not_modifieds = Metriks.meter('responses.not_modified').count
+
+    assert_equal 2, not_modifieds
+  end
+
   def test_omits_queue_metrics
     Metriks::Middleware.new(@downstream).call(@env)
 

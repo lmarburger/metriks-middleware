@@ -55,6 +55,8 @@ module Metriks
         Metriks.meter("responses.error").mark
       elsif status == 404
         Metriks.meter("responses.not_found").mark
+      elsif status == 304
+        Metriks.meter("responses.not_modified").mark
       end
     end
 
