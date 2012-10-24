@@ -38,16 +38,19 @@ module Metriks
 
     def record_error_rate(env)
       original_callback = env['async.callback']
-      env['async.callback'] = lambda do |env|
-        record_error env.first
-        original_callback.call env
+      env['async.callback'] = lambda do |(status, headers, body)|
+        record_error status
+        record_content_length headers
+        original_callback.call [status, headers, body]
       end
     end
 
     def call_downstream(env)
-      response = @app.call env
-      record_error response.first
-      response
+      status, headers, body = @app.call env
+      record_error status
+      record_content_length headers
+
+      [status, headers, body]
     end
 
     def record_error(status)
@@ -58,6 +61,12 @@ module Metriks
       elsif status == 304
         Metriks.meter("responses.not_modified").mark
       end
+    end
+
+    def record_content_length(headers)
+      content_length = headers.fetch('Content-Length', 0).to_i
+      return unless content_length > 0
+      Metriks.histogram('responses.content_length').update(content_length)
     end
 
     def response_timer

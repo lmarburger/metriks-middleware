@@ -23,8 +23,8 @@ class AsyncAppTest < Test::Unit::TestCase
   end
 
   def test_calls_downstream
+    response   = [200, { 'Header' => 'value' }, ['body']]
     downstream = mock
-    response   = stub first: 42
     downstream.expects(:call).with(@env).returns(response)
 
     actual_response = Metriks::Middleware.new(downstream).call(@env)
@@ -59,6 +59,23 @@ class AsyncAppTest < Test::Unit::TestCase
     time  = Metriks.timer('app').mean
 
     assert_in_delta 0.1, time, 0.01
+  end
+
+  def test_records_content_length
+    length_sync_app  = lambda do |env| [200, {'Content-Length' => 42}, ['']] end
+    length_async_app = lambda do |env|
+      env['async.callback'].call [200, {'Content-Length' => 42}, ['']]
+      [-1, {}, ['']]
+    end
+
+    Metriks::Middleware.new(length_sync_app).call(@env.dup)
+    Metriks::Middleware.new(length_async_app).call(@env.dup)
+
+    count = Metriks.histogram('responses.content_length').count
+    size  = Metriks.histogram('responses.content_length').mean
+
+    assert_equal 2,  count
+    assert_equal 42, size
   end
 
   def test_records_error_responses

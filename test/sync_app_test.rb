@@ -20,8 +20,8 @@ class SyncAppTest < Test::Unit::TestCase
   end
 
   def test_calls_downstream
+    response   = [200, {}, ['']]
     downstream = mock
-    response   = stub first: 200
     downstream.expects(:call).with(@env).returns(response)
 
     actual_response = Metriks::Middleware.new(downstream).call(@env)
@@ -43,6 +43,17 @@ class SyncAppTest < Test::Unit::TestCase
     time = Metriks.timer('app').mean
 
     assert_in_delta 0.1, time, 0.01
+  end
+
+  def test_records_content_length
+    length_app = lambda do |env| [200, { 'Content-Length' => 42 }, ['']] end
+    Metriks::Middleware.new(length_app).call(@env)
+
+    count = Metriks.histogram('responses.content_length').count
+    size  = Metriks.histogram('responses.content_length').mean
+
+    assert_equal 1,  count
+    assert_equal 42, size
   end
 
   def test_records_error_responses
