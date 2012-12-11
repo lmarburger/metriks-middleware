@@ -98,13 +98,16 @@ class SyncAppTest < Test::Unit::TestCase
 
   def test_records_heroku_queue_metrics
     @env.merge! 'HTTP_X_HEROKU_QUEUE_WAIT_TIME' => '42',
-                'HTTP_X_HEROKU_QUEUE_DEPTH'     => '24'
+                'HTTP_X_HEROKU_QUEUE_DEPTH'     => '24',
+                'HTTP_X_HEROKU_DYNOS_IN_USE'    => '3'
     Metriks::Middleware.new(@downstream).call(@env)
 
     wait  = Metriks.histogram('queue.wait').mean
     depth = Metriks.histogram('queue.depth').mean
+    used  = Metriks.histogram('dynos.in_use').mean
 
     assert_equal 42, wait
     assert_equal 24, depth
+    assert_equal 3,  used
   end
 end
