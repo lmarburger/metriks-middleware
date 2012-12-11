@@ -10,7 +10,7 @@ module Metriks
 
     def call(env)
       time_response(env) do
-        record_heroku_queue_status env
+        record_heroku_status env
         record_error_rate env
         call_downstream env
       end
@@ -28,12 +28,14 @@ module Metriks
       end
     end
 
-    def record_heroku_queue_status(env)
+    def record_heroku_status(env)
       queue_wait   = env['HTTP_X_HEROKU_QUEUE_WAIT_TIME']
       queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
+      dynos_in_use = env['HTTP_X_HEROKU_DYNOS_IN_USE']
 
-      Metriks.histogram("queue.wait") .update(queue_wait.to_i)  if queue_wait
-      Metriks.histogram("queue.depth").update(queue_depth.to_i) if queue_depth
+      Metriks.histogram("queue.wait")  .update(queue_wait.to_i)   if queue_wait
+      Metriks.histogram("queue.depth") .update(queue_depth.to_i)  if queue_depth
+      Metriks.histogram("dynos.in_use").update(dynos_in_use.to_i) if dynos_in_use
     end
 
     def record_error_rate(env)
