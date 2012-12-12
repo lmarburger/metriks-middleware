@@ -91,9 +91,11 @@ class SyncAppTest < Test::Unit::TestCase
 
     wait  = Metriks.histogram('queue.wait').mean
     depth = Metriks.histogram('queue.depth').mean
+    used  = Metriks.histogram('dynos.in_use').mean
 
     assert_equal 0, wait
     assert_equal 0, depth
+    assert_equal 0, used
   end
 
   def test_records_heroku_queue_metrics
