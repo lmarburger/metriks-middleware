@@ -29,12 +29,7 @@ module Metriks
     end
 
     def record_heroku_status(env)
-      request_start = env['HTTP_X_REQUEST_START']
-      if request_start
-        duration   = ((Time.now.to_f * 1_000) - request_start.to_f).round
-        queue_wait = [duration, 0].max
-      end
-
+      queue_wait   = duration_since_request_start(env)
       queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
       dynos_in_use = env['HTTP_X_HEROKU_DYNOS_IN_USE']
 
@@ -78,6 +73,13 @@ module Metriks
 
     def response_timer
       Metriks.timer('app')
+    end
+
+    def duration_since_request_start(env)
+      request_start = env['HTTP_X_REQUEST_START']
+      return unless request_start
+      duration   = ((Time.now.to_f * 1_000) - request_start.to_f).round
+      [ duration, 0 ].max
     end
   end
 end
