@@ -32,10 +32,12 @@ module Metriks
       queue_wait   = duration_since_request_start(env)
       queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
       dynos_in_use = env['HTTP_X_HEROKU_DYNOS_IN_USE']
+      legacy_queue_wait = env['HTTP_X_HEROKU_QUEUE_WAIT_TIME']
 
       Metriks.histogram("queue.wait")  .update(queue_wait)        if queue_wait
       Metriks.histogram("queue.depth") .update(queue_depth.to_i)  if queue_depth
       Metriks.histogram("dynos.in_use").update(dynos_in_use.to_i) if dynos_in_use
+      Metriks.histogram("legacy.queue.wait").update(legacy_queue_wait.to_i) if legacy_queue_wait
     end
 
     def record_error_rate(env)
