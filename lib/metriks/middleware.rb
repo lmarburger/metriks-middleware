@@ -29,11 +29,16 @@ module Metriks
     end
 
     def record_heroku_status(env)
-      queue_wait   = env['HTTP_X_HEROKU_QUEUE_WAIT_TIME']
+      request_start = env['HTTP_X_REQUEST_START']
+      if request_start
+        duration   = ((Time.now.to_f * 1_000) - request_start.to_f).round
+        queue_wait = [duration, 0].max
+      end
+
       queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
       dynos_in_use = env['HTTP_X_HEROKU_DYNOS_IN_USE']
 
-      Metriks.histogram("queue.wait")  .update(queue_wait.to_i)   if queue_wait
+      Metriks.histogram("queue.wait")  .update(queue_wait)        if queue_wait
       Metriks.histogram("queue.depth") .update(queue_depth.to_i)  if queue_depth
       Metriks.histogram("dynos.in_use").update(dynos_in_use.to_i) if dynos_in_use
     end
