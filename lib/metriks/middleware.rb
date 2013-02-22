@@ -2,7 +2,7 @@ require 'metriks'
 
 module Metriks
   class Middleware
-    VERSION = '1.3.0'
+    VERSION = '2.0.0'
 
     REQUEST_DELAY              = 'request_delay'
     HEROKU_DYNOS_IN_USE        = 'heroku.dynos_in_use'

@@ -13,8 +13,8 @@ Gem::Specification.new do |s|
   ## If your rubyforge_project name is different, then edit it and comment out
   ## the sub! line in the Rakefile
   s.name              = 'metriks-middleware'
-  s.version           = '1.3.0'
-  s.date              = '2012-12-11'
+  s.version           = '2.0.0'
+  s.date              = '2013-02-22'
 
   ## Make sure your summary is short. The description may be as long
   ## as you like.
