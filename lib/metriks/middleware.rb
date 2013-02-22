@@ -22,7 +22,7 @@ module Metriks
       time_response(env) do
         record_request_delay env
         record_heroku_dynos_in_use env
-        record_error_rate env
+        record_response env
         call_downstream env
       end
     end
@@ -50,10 +50,10 @@ module Metriks
       Metriks.histogram(HEROKU_DYNOS_IN_USE).update(dynos.to_i)
     end
 
-    def record_error_rate(env)
+    def record_response(env)
       original_callback = env['async.callback']
       env['async.callback'] = lambda do |(status, headers, body)|
-        record_error status
+        record_staus_code status
         record_content_length headers
         original_callback.call [status, headers, body]
       end
@@ -61,13 +61,13 @@ module Metriks
 
     def call_downstream(env)
       status, headers, body = @app.call env
-      record_error status
+      record_staus_code status
       record_content_length headers
 
       [status, headers, body]
     end
 
-    def record_error(status)
+    def record_staus_code(status)
       if status >= 500
         Metriks.meter(ERROR_RESPONSE).mark
       elsif status == 404
