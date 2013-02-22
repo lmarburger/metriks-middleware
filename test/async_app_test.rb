@@ -28,7 +28,6 @@ class AsyncAppTest < Test::Unit::TestCase
     downstream.expects(:call).with(@env).returns(response)
 
     actual_response = Metriks::Middleware.new(downstream).call(@env)
-
     assert_equal response, actual_response
   end
 
@@ -43,7 +42,6 @@ class AsyncAppTest < Test::Unit::TestCase
     @async_close.call
 
     count = Metriks.timer('app').count
-
     assert_equal 1, count
   end
 
@@ -57,7 +55,6 @@ class AsyncAppTest < Test::Unit::TestCase
     @async_close.call
 
     time  = Metriks.timer('app').mean
-
     assert_in_delta 0.1, time, 0.01
   end
 
@@ -97,7 +94,6 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(success_async_app).call(@env.dup)
 
     errors = Metriks.meter('responses.error').count
-
     assert_equal 2, errors
   end
 
@@ -120,7 +116,6 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(success_async_app).call(@env.dup)
 
     not_founds = Metriks.meter('responses.not_found').count
-
     assert_equal 2, not_founds
   end
 
@@ -143,12 +138,12 @@ class AsyncAppTest < Test::Unit::TestCase
     Metriks::Middleware.new(success_async_app).call(@env.dup)
 
     not_modifieds = Metriks.meter('responses.not_modified').count
-
     assert_equal 2, not_modifieds
   end
 
   def test_omits_request_delay
     Metriks::Middleware.new(@downstream).call(@env)
+
     used = Metriks.histogram('request_delay').mean
     assert_equal 0, used
   end
@@ -175,6 +170,7 @@ class AsyncAppTest < Test::Unit::TestCase
 
   def test_omits_heroku_dynos_in_use
     Metriks::Middleware.new(@downstream).call(@env)
+
     used = Metriks.histogram('heroku.dynos_in_use').mean
     assert_equal 0, used
   end
