@@ -10,6 +10,7 @@ module Metriks
 
     def call(env)
       time_response(env) do
+        record_request_wait env
         record_heroku_status env
         record_error_rate env
         call_downstream env
@@ -28,14 +29,27 @@ module Metriks
       end
     end
 
+    def record_request_wait(env)
+      wait = duration_since_request_start(env)
+      Metriks.histogram('request.wait').update(wait)
+    end
+
     def record_heroku_status(env)
-      queue_wait   = duration_since_request_start(env)
+      queue_wait   = env['HTTP_X_HEROKU_QUEUE_WAIT_TIME']
       queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
       dynos_in_use = env['HTTP_X_HEROKU_DYNOS_IN_USE']
 
-      Metriks.histogram("queue.wait")  .update(queue_wait)        if queue_wait
-      Metriks.histogram("queue.depth") .update(queue_depth.to_i)  if queue_depth
-      Metriks.histogram("dynos.in_use").update(dynos_in_use.to_i) if dynos_in_use
+      if queue_wait
+        Metriks.histogram('heroku.queue.wait').update(queue_wait.to_i)
+      end
+
+      if queue_depth
+        Metriks.histogram('heroku.queue.depth').update(queue_depth.to_i)
+      end
+
+      if dynos_in_use
+        Metriks.histogram('heroku.dynos.in_use').update(dynos_in_use.to_i)
+      end
     end
 
     def record_error_rate(env)
@@ -77,8 +91,8 @@ module Metriks
 
     def duration_since_request_start(env)
       request_start = env['HTTP_X_REQUEST_START']
-      return unless request_start
-      duration   = ((Time.now.to_f * 1_000) - request_start.to_f).round
+      return 0 unless request_start
+      duration = ((Time.now.to_f * 1_000) - request_start.to_f).round
       [ duration, 0 ].max
     end
   end
