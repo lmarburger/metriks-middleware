@@ -86,41 +86,20 @@ class SyncAppTest < Test::Unit::TestCase
     assert_equal 2, not_modifieds
   end
 
-  def test_omits_queue_metrics
+  def test_omits_request_delay
     Metriks::Middleware.new(@downstream).call(@env)
-
-    wait  = Metriks.histogram('queue.wait').mean
-    depth = Metriks.histogram('queue.depth').mean
-    used  = Metriks.histogram('dynos.in_use').mean
-
-    assert_equal 0, wait
-    assert_equal 0, depth
+    used = Metriks.histogram('request_delay').mean
     assert_equal 0, used
   end
 
-  def test_records_heroku_metrics
-    @env.merge! 'HTTP_X_HEROKU_QUEUE_WAIT_TIME' => '42',
-                'HTTP_X_HEROKU_QUEUE_DEPTH'     => '24',
-                'HTTP_X_HEROKU_DYNOS_IN_USE'    => '3'
-    Metriks::Middleware.new(@downstream).call(@env)
-
-    wait  = Metriks.histogram('heroku.queue.wait').mean
-    depth = Metriks.histogram('heroku.queue.depth').mean
-    used  = Metriks.histogram('heroku.dynos.in_use').mean
-
-    assert_equal 42, wait
-    assert_equal 24, depth
-    assert_equal 3,  used
-  end
-
-  def test_records_request_wait
+  def test_records_request_delay
     now   = Time.now.to_f * 1000
     start = now - 42
     @env.merge! 'HTTP_X_REQUEST_START' => start.to_s
     Metriks::Middleware.new(@downstream).call(@env)
 
-    wait = Metriks.histogram('request.wait').mean
-    assert_in_delta 42, wait, 1
+    delay = Metriks.histogram('request_delay').mean
+    assert_in_delta 42, delay, 1
   end
 
   def test_ignores_future_request_start_time
@@ -129,7 +108,21 @@ class SyncAppTest < Test::Unit::TestCase
     @env.merge! 'HTTP_X_REQUEST_START' => start.to_s
     Metriks::Middleware.new(@downstream).call(@env)
 
-    wait = Metriks.histogram('request.wait').mean
-    assert_equal 0, wait
+    delay = Metriks.histogram('request_delay').mean
+    assert_equal 0, delay
+  end
+
+  def test_omits_heroku_dynos_in_use
+    Metriks::Middleware.new(@downstream).call(@env)
+    used = Metriks.histogram('dynos_in_use').mean
+    assert_equal 0, used
+  end
+
+  def test_records_heroku_dynos_in_use
+    @env.merge! 'HTTP_X_HEROKU_DYNOS_IN_USE' => '42'
+    Metriks::Middleware.new(@downstream).call(@env)
+
+    dynos = Metriks.histogram('heroku.dynos_in_use').mean
+    assert_equal 42, dynos
   end
 end
