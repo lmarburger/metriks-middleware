@@ -4,6 +4,20 @@ module Metriks
   class Middleware
     VERSION = '1.3.0'
 
+    REQUEST_WAIT          = 'request.wait'
+    HEROKU_QUEUE_WAIT     = 'heroku.queue.wait'
+    HEROKU_QUEUE_DEPTH    = 'heroku.queue.depth'
+    HEROKU_DYNOS_IN_USE   = 'heroku.dynos.in_use'
+    ERROR_RESPONSE        = 'responses.error'
+    NOT_FOUND_RESPONSE    = 'responses.not_found'
+    NOT_MODIFIED_RESPONSE = 'responses.not_modified'
+    CONTENT_LENGTH        = 'responses.content_length'
+
+    QUEUE_WAIT_HEADER     = 'HTTP_X_HEROKU_QUEUE_WAIT_TIME'
+    QUEUE_DEPTH_HEADER    = 'HTTP_X_HEROKU_QUEUE_DEPTH'
+    DYNOS_IN_USE_HEADER   = 'HTTP_X_HEROKU_DYNOS_IN_USE'
+    REQUEST_START_HEADER  = 'HTTP_X_REQUEST_START'
+
     def initialize(app)
       @app = app
     end
@@ -31,24 +45,27 @@ module Metriks
 
     def record_request_wait(env)
       wait = duration_since_request_start(env)
-      Metriks.histogram('request.wait').update(wait)
+      Metriks.histogram(REQUEST_WAIT).update(wait)
     end
 
     def record_heroku_status(env)
-      queue_wait   = env['HTTP_X_HEROKU_QUEUE_WAIT_TIME']
-      queue_depth  = env['HTTP_X_HEROKU_QUEUE_DEPTH']
-      dynos_in_use = env['HTTP_X_HEROKU_DYNOS_IN_USE']
+      queue_wait   = env[QUEUE_WAIT_HEADER]
+      queue_depth  = env[QUEUE_DEPTH_HEADER]
+      dynos_in_use = env[DYNOS_IN_USE_HEADER]
 
       if queue_wait
-        Metriks.histogram('heroku.queue.wait').update(queue_wait.to_i)
+        Metriks.histogram(HEROKU_QUEUE_WAIT).
+          update(queue_wait.to_i)
       end
 
       if queue_depth
-        Metriks.histogram('heroku.queue.depth').update(queue_depth.to_i)
+        Metriks.histogram(HEROKU_QUEUE_DEPTH).
+          update(queue_depth.to_i)
       end
 
       if dynos_in_use
-        Metriks.histogram('heroku.dynos.in_use').update(dynos_in_use.to_i)
+        Metriks.histogram(HEROKU_DYNOS_IN_USE).
+          update(dynos_in_use.to_i)
       end
     end
 
@@ -71,18 +88,18 @@ module Metriks
 
     def record_error(status)
       if status >= 500
-        Metriks.meter("responses.error").mark
+        Metriks.meter(ERROR_RESPONSE).mark
       elsif status == 404
-        Metriks.meter("responses.not_found").mark
+        Metriks.meter(NOT_FOUND_RESPONSE).mark
       elsif status == 304
-        Metriks.meter("responses.not_modified").mark
+        Metriks.meter(NOT_MODIFIED_RESPONSE).mark
       end
     end
 
     def record_content_length(headers)
       content_length = headers.fetch('Content-Length', 0).to_i
       return unless content_length > 0
-      Metriks.histogram('responses.content_length').update(content_length)
+      Metriks.histogram(CONTENT_LENGTH).update(content_length)
     end
 
     def response_timer
@@ -90,7 +107,7 @@ module Metriks
     end
 
     def duration_since_request_start(env)
-      request_start = env['HTTP_X_REQUEST_START']
+      request_start = env[REQUEST_START_HEADER]
       return 0 unless request_start
       duration = ((Time.now.to_f * 1_000) - request_start.to_f).round
       duration > 0 ? duration : 0
