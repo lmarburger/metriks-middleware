@@ -4,15 +4,15 @@ module Metriks
   class Middleware
     VERSION = '1.3.0'
 
-    REQUEST_DELAY         = 'request_delay'
-    HEROKU_DYNOS_IN_USE   = 'heroku.dynos_in_use'
-    ERROR_RESPONSE        = 'responses.error'
-    NOT_FOUND_RESPONSE    = 'responses.not_found'
-    NOT_MODIFIED_RESPONSE = 'responses.not_modified'
-    CONTENT_LENGTH        = 'responses.content_length'
+    REQUEST_DELAY              = 'request_delay'
+    HEROKU_DYNOS_IN_USE        = 'heroku.dynos_in_use'
+    ERROR_RESPONSE             = 'responses.error'
+    NOT_FOUND_RESPONSE         = 'responses.not_found'
+    NOT_MODIFIED_RESPONSE      = 'responses.not_modified'
+    CONTENT_LENGTH             = 'responses.content_length'
 
-    REQUEST_START_HEADER  = 'HTTP_X_REQUEST_START'
-    DYNOS_IN_USE_HEADER   = 'HTTP_X_HEROKU_DYNOS_IN_USE'
+    REQUEST_START_HEADER       = 'HTTP_X_REQUEST_START'
+    HEROKU_DYNOS_IN_USE_HEADER = 'HTTP_X_HEROKU_DYNOS_IN_USE'
 
     def initialize(app)
       @app = app
@@ -45,7 +45,7 @@ module Metriks
     end
 
     def record_heroku_dynos_in_use(env)
-      dynos = env[DYNOS_IN_USE_HEADER]
+      dynos = env[HEROKU_DYNOS_IN_USE_HEADER]
       return unless dynos
       Metriks.histogram(HEROKU_DYNOS_IN_USE).update(dynos.to_i)
     end

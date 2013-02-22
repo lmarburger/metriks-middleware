@@ -114,7 +114,7 @@ class SyncAppTest < Test::Unit::TestCase
 
   def test_omits_heroku_dynos_in_use
     Metriks::Middleware.new(@downstream).call(@env)
-    used = Metriks.histogram('dynos_in_use').mean
+    used = Metriks.histogram('heroku.dynos_in_use').mean
     assert_equal 0, used
   end
 
