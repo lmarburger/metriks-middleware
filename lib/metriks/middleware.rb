@@ -93,7 +93,7 @@ module Metriks
       request_start = env['HTTP_X_REQUEST_START']
       return 0 unless request_start
       duration = ((Time.now.to_f * 1_000) - request_start.to_f).round
-      [ duration, 0 ].max
+      duration > 0 ? duration : 0
     end
   end
 end
