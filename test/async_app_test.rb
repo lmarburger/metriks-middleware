@@ -167,19 +167,4 @@ class AsyncAppTest < Test::Unit::TestCase
     delay = Metriks.histogram('request_delay').mean
     assert_equal 0, delay
   end
-
-  def test_omits_heroku_dynos_in_use
-    Metriks::Middleware.new(@downstream).call(@env)
-
-    used = Metriks.histogram('heroku.dynos_in_use').mean
-    assert_equal 0, used
-  end
-
-  def test_records_heroku_dynos_in_use
-    @env.merge! 'HTTP_X_HEROKU_DYNOS_IN_USE' => '42'
-    Metriks::Middleware.new(@downstream).call(@env)
-
-    dynos = Metriks.histogram('heroku.dynos_in_use').mean
-    assert_equal 42, dynos
-  end
 end

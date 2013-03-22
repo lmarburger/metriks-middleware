@@ -5,14 +5,11 @@ module Metriks
     VERSION = '2.0.0'
 
     REQUEST_DELAY              = 'request_delay'
-    HEROKU_DYNOS_IN_USE        = 'heroku.dynos_in_use'
     ERROR_RESPONSE             = 'responses.error'
     NOT_FOUND_RESPONSE         = 'responses.not_found'
     NOT_MODIFIED_RESPONSE      = 'responses.not_modified'
     CONTENT_LENGTH             = 'responses.content_length'
-
     REQUEST_START_HEADER       = 'HTTP_X_REQUEST_START'
-    HEROKU_DYNOS_IN_USE_HEADER = 'HTTP_X_HEROKU_DYNOS_IN_USE'
 
     def initialize(app)
       @app = app
@@ -21,7 +18,6 @@ module Metriks
     def call(env)
       time_response(env) do
         record_request_delay env
-        record_heroku_dynos_in_use env
         record_response env
         call_downstream env
       end
@@ -42,12 +38,6 @@ module Metriks
     def record_request_delay(env)
       delay = duration_since_request_start(env)
       Metriks.histogram(REQUEST_DELAY).update(delay)
-    end
-
-    def record_heroku_dynos_in_use(env)
-      dynos = env[HEROKU_DYNOS_IN_USE_HEADER]
-      return unless dynos
-      Metriks.histogram(HEROKU_DYNOS_IN_USE).update(dynos.to_i)
     end
 
     def record_response(env)
