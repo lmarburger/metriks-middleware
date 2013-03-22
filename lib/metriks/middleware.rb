@@ -2,8 +2,6 @@ require 'metriks'
 
 module Metriks
   class Middleware
-    VERSION = '2.1.0'
-
     REQUEST_DELAY              = 'request_delay'
     ERROR_RESPONSE             = 'responses.error'
     NOT_FOUND_RESPONSE         = 'responses.not_found'
