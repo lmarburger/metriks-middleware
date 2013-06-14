@@ -106,4 +106,26 @@ class SyncAppTest < Test::Unit::TestCase
     delay = Metriks.histogram('request_delay').mean
     assert_equal 0, delay
   end
+
+  def test_records_string_statuses
+    error_app = lambda do |env| ['500', {}, ['']] end
+    2.times { Metriks::Middleware.new(error_app).call(@env) }
+    Metriks::Middleware.new(@downstream).call(@env)
+
+    errors = Metriks.meter('responses.error').count
+    assert_equal 2, errors
+  end
+
+  def test_ignores_non_integer_statuses
+    error_app = lambda do |env| ['fail', {}, ['']] end
+    2.times { Metriks::Middleware.new(error_app).call(@env) }
+    Metriks::Middleware.new(@downstream).call(@env)
+
+    errors        = Metriks.meter('responses.error').count
+    not_founds    = Metriks.meter('responses.not_found').count
+    not_modifieds = Metriks.meter('responses.not_modified').count
+    assert_equal 0, errors
+    assert_equal 0, not_founds
+    assert_equal 0, not_modifieds
+  end
 end

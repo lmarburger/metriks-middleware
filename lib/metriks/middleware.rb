@@ -56,6 +56,7 @@ module Metriks
     end
 
     def record_staus_code(status)
+      status = status.to_i
       if status >= 500
         Metriks.meter(ERROR_RESPONSE).mark
       elsif status == 404
